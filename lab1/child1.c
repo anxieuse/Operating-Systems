@@ -37,7 +37,7 @@ int main(void)
             }
         }
         res[d] = '\0';
-        printf("Proceeded line: %s", res);
+        printf("Processed line: %s", res);
     }
     printf("1st Child %d: I'm Done!\n", mypid);
 
