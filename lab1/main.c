@@ -132,21 +132,46 @@ int main(int argc, char *argv[])
     char msg[MAX_STR_LENGTH];
     while (fgets(msg, MAX_STR_LENGTH, stdin))
     {
-        if (strlen(msg) > 10)
+        if (strlen(msg) <= 10)
         {
-            write(fd[1][WR], msg, strlen(msg));
+            if (write(fd[0][WR], msg, strlen(msg)) < 0)
+            {
+                perror("Write err");
+                exit(1);
+            }
         }
         else
         {
-            write(fd[0][WR], msg, strlen(msg));
+            if (write(fd[1][WR], msg, strlen(msg)) < 0)
+            {
+                perror("Write err");
+                exit(1);
+            }
         }
     }
 
     close(fd[0][WR]);
     close(fd[1][WR]);
 
-    waitpid(pid1, NULL, 0);
-    waitpid(pid2, NULL, 0);
+    int statusChild1, statusChild2;
+    waitpid(pid1, &statusChild1, 0);
+    if (WIFEXITED(statusChild1))
+    {
+        printf("Child 1 exited, returned  %d\n", WEXITSTATUS(statusChild1));
+    }
+    else
+    {
+        fprintf(stderr, "Something is wrong with 1st child process\n");
+    }
+    waitpid(pid2, &statusChild2, 0);
+    if (WIFEXITED(statusChild1))
+    {
+        printf("Child 2 exited, returned  %d\n", WEXITSTATUS(statusChild2));
+    }
+    else
+    {
+        fprintf(stderr, "Something is wrong with 2nd child process\n");
+    }
 
     return 0;
 }
