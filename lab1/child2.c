@@ -25,7 +25,6 @@ int main(void)
     mypid = getpid(); // Process-ID
     printf("2nd Child %d: Started!\n", mypid);
 
-    // For each line read, write one tostdout.
     while (fgets(buff, INBUFSIZE, stdin))
     {
         printf("I got new line: %s", buff);
@@ -38,7 +37,7 @@ int main(void)
             }
         }
         res[d] = '\0';
-        printf("Proceeded line: %s", res);
+        printf("Processed line: %s", res);
     }
     printf("2nd Child %d: I'm Done!\n", mypid);
 
