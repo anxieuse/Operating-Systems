@@ -123,8 +123,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    char *eol;
-
     close(fd[0][RD]);
     close(fd[1][RD]);
 
