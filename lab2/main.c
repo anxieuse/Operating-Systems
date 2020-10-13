@@ -1,97 +1,175 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include <pthread.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/wait.h>
 
-const int DECK_SIZE = 52;
+#define MAX_FNAME_LENGTH 100
+#define MAX_STR_LENGTH 300
 
-void swap(int *a, int *b)
-{
-    int tmp = *a;
-    *a = *b;
-    *b = tmp;
-}
-
-int count = 0;
-pthread_mutex_t mutex;
-
-void *thread_func(void *arg)
-{
-    int deck[DECK_SIZE];
-
-    for (int k = 0; k < *((int *)arg); ++k)
-    {
-        for (int i = 0; i < DECK_SIZE; ++i)
-        {
-            deck[i] = (i + 1) % 13; // значения карт варьируются от 2 до 14 == от 0 до 12
-        }
-
-        srand(clock());
-
-        for (int i = DECK_SIZE - 1; i >= 0; --i)
-        {
-            int j = (int)rand() % (i + 1);
-            swap(&deck[i], &deck[j]);
-        }
-
-        if (deck[0] == deck[1])
-        {
-            pthread_mutex_lock(&mutex);
-            ++count;
-            pthread_mutex_unlock(&mutex);
-        }
-    }
-
-    pthread_exit(0);
-}
+#define RD 0 // Read end of pipe
+#define WR 1 // Write end of pipe
 
 int main(int argc, char *argv[])
 {
-    if (argc != 3)
+    if (argc < 3)
     {
-        perror("Usage: ./main <number of rounds> <number of threads>\n");
-        exit(1);
+        printf("Usage: ./main filename1 filename2\n");
+        exit(-1);
     }
 
-    clock_t begin = clock();
+    char filename1[MAX_FNAME_LENGTH], filename2[MAX_FNAME_LENGTH];
+    printf("Name of the 1st child-output file: %s\n", argv[1]);
+    printf("Name of the 2nd child-output file: %s\n", argv[2]);
+    strcpy(filename1, argv[1]);
+    strcpy(filename2, argv[2]);
 
-    pthread_t tid[atoi(argv[2])];
-
-    if (pthread_mutex_init(&mutex, NULL) < 0)
+    int fd[2][2];
+    for (int i = 0; i < 2; ++i)
     {
-        perror("Mutex init error");
-        exit(1);
-    }
-
-    int rounds_per_thread = atoi(argv[1]) / atoi(argv[2]);
-    for (int i = 0; i < atoi(argv[2]); ++i)
-    {
-        if (pthread_create(&tid[i], NULL, thread_func, &rounds_per_thread) != 0)
+        if (pipe(fd[i]) < 0)
         {
-            perror("Can't create thread\n");
-            exit(1);
-        }
-    }
-    for (int i = 0; i < atoi(argv[2]); ++i)
-    {
-        if (pthread_join(tid[i], NULL) != 0)
-        {
-            perror("Can't join threads");
+            perror("Pipe error");
             exit(1);
         }
     }
 
-    if (pthread_mutex_destroy(&mutex) < 0)
+    pid_t pid1, pid2;
+
+    pid1 = fork();
+    if (pid1 < 0)
     {
-        perror("Mutex destroy error");
+        perror("Fork err");
         exit(1);
     }
+    else if (pid1 == 0)
+    { // child1
+        // closing useless pipes
+        close(fd[1][0]);
+        close(fd[1][1]);
+        close(fd[0][WR]);
 
-    clock_t end = clock();
-    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+        int file_out = open(filename1, O_WRONLY | O_CREAT | O_TRUNC, 0777);
+        if (file_out < 0)
+        {
+            perror("File err");
+            exit(1);
+        }
 
-    printf("Probability equals to %.3lf\n", (double)count / atoi(argv[1]));
-    printf("Time spent: %lf seconds\n", time_spent);
+        int new_out = dup2(file_out, STDOUT_FILENO);
+        close(file_out);
+        if (new_out < 0)
+        {
+            perror("Duping child1 stdout err");
+            exit(1);
+        }
+
+        int new_in = dup2(fd[0][RD], STDIN_FILENO);
+        close(fd[0][RD]);
+        if (new_in < 0)
+        {
+            perror("Duping child1 stdin err");
+            exit(1);
+        }
+
+        if (execlp("./child1", "child1", NULL) < 0)
+        {
+            perror("Execl err");
+            exit(1);
+        }
+    }
+
+    pid2 = fork();
+    if (pid2 < 0)
+    {
+        perror("Fork err");
+        exit(1);
+    }
+    else if (pid2 == 0)
+    { // child2
+        // closing useless pipes
+        close(fd[0][0]);
+        close(fd[0][1]);
+        close(fd[1][WR]);
+
+        int file_out = open(filename2, O_WRONLY | O_CREAT | O_TRUNC, 0777);
+        if (file_out < 0)
+        {
+            perror("File err");
+            exit(1);
+        }
+
+        int new_out = dup2(file_out, STDOUT_FILENO);
+        close(file_out);
+        if (new_out < 0)
+        {
+            perror("Duping child2 stdout err");
+            exit(1);
+        }
+
+        int new_in = dup2(fd[1][RD], STDIN_FILENO);
+        close(fd[1][RD]);
+        if (new_in < 0)
+        {
+            perror("Duping child1 stdin err");
+            exit(1);
+        }
+
+        if (execlp("./child2", "child2", NULL) < 0)
+        {
+            perror("Execl err");
+            exit(1);
+        }
+    }
+
+    close(fd[0][RD]);
+    close(fd[1][RD]);
+
+    printf("Enter strings to process: \n");
+    char msg[MAX_STR_LENGTH];
+    while (fgets(msg, MAX_STR_LENGTH, stdin))
+    {
+        if (strlen(msg) <= 10)
+        {
+            if (write(fd[0][WR], msg, strlen(msg)) < 0)
+            {
+                perror("Write err");
+                exit(1);
+            }
+        }
+        else
+        {
+            if (write(fd[1][WR], msg, strlen(msg)) < 0)
+            {
+                perror("Write err");
+                exit(1);
+            }
+        }
+    }
+
+    close(fd[0][WR]);
+    close(fd[1][WR]);
+
+    int statusChild1, statusChild2;
+    waitpid(pid1, &statusChild1, 0);
+    if (WIFEXITED(statusChild1))
+    {
+        printf("Child 1 exited, returned  %d\n", WEXITSTATUS(statusChild1));
+    }
+    else
+    {
+        fprintf(stderr, "Something is wrong with 1st child process\n");
+    }
+    waitpid(pid2, &statusChild2, 0);
+    if (WIFEXITED(statusChild1))
+    {
+        printf("Child 2 exited, returned  %d\n", WEXITSTATUS(statusChild2));
+    }
+    else
+    {
+        fprintf(stderr, "Something is wrong with 2nd child process\n");
+    }
 
     return 0;
 }
