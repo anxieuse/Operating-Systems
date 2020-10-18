@@ -11,6 +11,48 @@
 #define RD 0 // Read end of pipe
 #define WR 1 // Write end of pipe
 
+pid_t createchild(int *myfd, int *exfd, char *filename) {
+    pid_t pid = fork();
+    if(pid < 0) {
+        perror("Fork err");
+        exit(1);
+    }
+    if(pid == 0) {
+        close(exfd[0]);
+        close(exfd[1]);
+        close(myfd[WR]);
+        int file_out = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0777);
+        if (file_out < 0)
+        {
+            perror("File err");
+            exit(1);
+        }
+
+        int new_out = dup2(file_out, STDOUT_FILENO);
+        close(file_out);
+        if (new_out < 0)
+        {
+            perror("Duping child stdout err");
+            exit(1);
+        }
+
+        int new_in = dup2(myfd[RD], STDIN_FILENO);
+        close(myfd[RD]);
+        if (new_in < 0)
+        {
+            perror("Duping child stdin err");
+            exit(1);
+        }
+
+        if (execlp("./child", "child", NULL) < 0)
+        {
+            perror("Execl err");
+            exit(1);
+        }
+    }
+    return pid;
+}
+
 int main(int argc, char *argv[])
 {
     if (argc < 3)
@@ -36,92 +78,10 @@ int main(int argc, char *argv[])
     }
 
     pid_t pid1, pid2;
+    pid1 = createchild(fd[0], fd[1], filename1);
+    pid2 = createchild(fd[1], fd[0], filename2);
 
-    pid1 = fork();
-    if (pid1 < 0)
-    {
-        perror("Fork err");
-        exit(1);
-    }
-    else if (pid1 == 0)
-    { // child1
-        // closing useless pipes
-        close(fd[1][0]);
-        close(fd[1][1]);
-        close(fd[0][WR]);
 
-        int file_out = open(filename1, O_WRONLY | O_CREAT | O_TRUNC, 0777);
-        if (file_out < 0)
-        {
-            perror("File err");
-            exit(1);
-        }
-
-        int new_out = dup2(file_out, STDOUT_FILENO);
-        close(file_out);
-        if (new_out < 0)
-        {
-            perror("Duping child1 stdout err");
-            exit(1);
-        }
-
-        int new_in = dup2(fd[0][RD], STDIN_FILENO);
-        close(fd[0][RD]);
-        if (new_in < 0)
-        {
-            perror("Duping child1 stdin err");
-            exit(1);
-        }
-
-        if (execlp("./child", "child", NULL) < 0)
-        {
-            perror("Execl err");
-            exit(1);
-        }
-    }
-
-    pid2 = fork();
-    if (pid2 < 0)
-    {
-        perror("Fork err");
-        exit(1);
-    }
-    else if (pid2 == 0)
-    { // child2
-        // closing useless pipes
-        close(fd[0][0]);
-        close(fd[0][1]);
-        close(fd[1][WR]);
-
-        int file_out = open(filename2, O_WRONLY | O_CREAT | O_TRUNC, 0777);
-        if (file_out < 0)
-        {
-            perror("File err");
-            exit(1);
-        }
-
-        int new_out = dup2(file_out, STDOUT_FILENO);
-        close(file_out);
-        if (new_out < 0)
-        {
-            perror("Duping child2 stdout err");
-            exit(1);
-        }
-
-        int new_in = dup2(fd[1][RD], STDIN_FILENO);
-        close(fd[1][RD]);
-        if (new_in < 0)
-        {
-            perror("Duping child1 stdin err");
-            exit(1);
-        }
-
-        if (execlp("./child", "child", NULL) < 0)
-        {
-            perror("Execl err");
-            exit(1);
-        }
-    }
 
     close(fd[0][RD]);
     close(fd[1][RD]);
@@ -150,6 +110,8 @@ int main(int argc, char *argv[])
 
     close(fd[0][WR]);
     close(fd[1][WR]);
+
+
 
     int statusChild1, statusChild2;
     waitpid(pid1, &statusChild1, 0);
