@@ -18,7 +18,7 @@ int main(void)
     char buff[INBUFSIZE], res[INBUFSIZE];
 
     pid_t mypid = getpid();
-    printf("1st Child %d: Started!\n", mypid);
+    printf("Child %d: Started!\n", mypid);
 
     while (fgets(buff, INBUFSIZE, stdin))
     {
@@ -36,7 +36,7 @@ int main(void)
 
         printf("Processed line: %s", res);
     }
-    printf("1st Child %d: I'm Done!\n", mypid);
+    printf("Child %d: I'm Done!\n", mypid);
 
     return 0;
 }
