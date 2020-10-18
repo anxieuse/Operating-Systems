@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
             exit(1);
         }
 
-        if (execlp("./child1", "child1", NULL) < 0)
+        if (execlp("./child", "child", NULL) < 0)
         {
             perror("Execl err");
             exit(1);
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
             exit(1);
         }
 
-        if (execlp("./child2", "child2", NULL) < 0)
+        if (execlp("./child", "child", NULL) < 0)
         {
             perror("Execl err");
             exit(1);
