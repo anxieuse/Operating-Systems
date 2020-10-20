@@ -15,14 +15,12 @@ int isVowel(char t)
 
 int main(void)
 {
-    char buff[INBUFSIZE], res[INBUFSIZE];
+    char *buff = NULL, res[INBUFSIZE];
 
-    pid_t mypid = getpid();
-    printf("Child %d: Started!\n", mypid);
-
-    while (fgets(buff, INBUFSIZE, stdin))
+    size_t len;
+    while (getline(&buff, &len, stdin) != -1)
     {
-        printf("Received line: %s", buff);
+        buff[strlen(buff) - 1] = '\0';
 
         int d = 0;
         for (int i = 0; i < strlen(buff); ++i)
@@ -34,9 +32,8 @@ int main(void)
         }
         res[d] = '\0';
 
-        printf("Processed line: %s", res);
+        printf("%s\n", res);
     }
-    printf("Child %d: I'm Done!\n", mypid);
 
     return 0;
 }
