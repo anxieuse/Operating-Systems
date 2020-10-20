@@ -47,6 +47,7 @@ void *thread_func(void *arg)
 
 int main(int argc, char *argv[])
 {
+
     if (argc != 3)
     {
         perror("Usage: ./main <number of rounds> <number of threads>\n");
