@@ -1,6 +1,6 @@
 # Operating System labs in Moscow Aviation Institute.
 
-Помощь с лабораторными: t.me/Iamtheplague, vk.com/id551766246
+Помощь с лабораторными: [Vk](https://vk.com/id551766246), [Telegram](https://t.me/Iamtheplague)
 
 lab1 - diagnosing, debugging using strace;
 
