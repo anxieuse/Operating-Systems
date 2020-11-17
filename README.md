@@ -1,6 +1,6 @@
 # Operating System labs in Moscow Aviation Institute.
 
-Tutor: Mironov Evgeny Sergeevich
+Помощь с лабораторными: t.me/Iamtheplague, vk.com/id551766246
 
 lab1 - diagnosing, debugging using strace;
 
