@@ -68,11 +68,9 @@ char *ufgets(FILE *stream)
 
 int main(int argc, char *argv[])
 {
-    // output files of child1, child2
     char *filename1 = ufgets(stdin);
     char *filename2 = ufgets(stdin);
 
-    // input
     int input = open("./input.txt", O_RDWR | O_CREAT | O_TRUNC, 0777);
     if (input < 0) {
         perror("Couldn't open input file\n");
@@ -93,7 +91,6 @@ int main(int argc, char *argv[])
     
     close(input);
 
-    // processes cleanup
     int statusChild1, statusChild2;
     waitpid(pid1, &statusChild1, 0);
     if (WIFEXITED(statusChild1))
@@ -114,7 +111,6 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Something is wrong with 2nd child process\n");
     }
 
-    // memory cleanup
     free(msg);
 
     return 0;
