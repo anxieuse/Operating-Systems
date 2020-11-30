@@ -9,8 +9,6 @@
 #include <sys/mman.h>
 #include "sys/stat.h"
 
-#define INBUFSIZE 300 // Buffer size
-
 int isVowel(char t)
 {
     t = tolower(t);
@@ -88,7 +86,6 @@ int main(int argc, char *argv[])
     {
         PrintNoVowels(msg, type);
         pos += strlen(msg);
-        free(msg);
         if (byte_ptr[pos] == '\n') pos++;
     }
 
