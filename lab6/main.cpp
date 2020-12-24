@@ -13,10 +13,10 @@ int main()
 {
     zmq::context_t context(1);
     zmq::socket_t mainSocket(context, ZMQ_REQ);
-    
+
     // ZMQ_SNDTIMEO: Maximum time before a send operation returns with EAGAIN
     mainSocket.setsockopt(ZMQ_SNDTIMEO, 2000);
-    // ZMQ_LINGER: linger period determines how long pending messages which have yet to be sent to a peer shall linger in memory after a socket is closed 
+    // ZMQ_LINGER: linger period determines how long pending messages which have yet to be sent to a peer shall linger in memory after a socket is closed
     int linger = 0;
     mainSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
     int port = bindSocket(mainSocket);
@@ -42,7 +42,7 @@ int main()
             if (childPid == 0) {
                 childPid = fork();
                 if (childPid == -1) {
-                    std::cout << "Unable to create first worker node\n";
+                    std::cout << "Error: fork fails\n";
                     childPid = 0;
                     exit(1);
                 }
@@ -131,7 +131,10 @@ int main()
         }
         else if (cmd == "pingall") {
             std::vector<int> nodesList = tree.getNodesList();
-            if (nodesList.empty()) {std::cout << "Error: Tree is empty\n"; continue;}
+            if (nodesList.empty()) {
+                std::cout << "Error: Tree is empty\n";
+                continue;
+            }
 
             sendMessage(mainSocket, "pingall");
             receivedMsg = receiveMessage(mainSocket);
