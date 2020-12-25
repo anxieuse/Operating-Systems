@@ -1,7 +1,5 @@
 # Operating System labs in Moscow Aviation Institute.
 
-## Tutor: Mironov Evgeny Sergeevich
-
 lab1 - diagnosing, debugging using strace;
 
 lab2 - multiprocessing: var. 17;
