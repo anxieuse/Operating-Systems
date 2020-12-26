@@ -52,9 +52,7 @@ int main(int argc, char **argv)
         else if (cmd == "create") {
             int idToCreate;
             cmdStream >> idToCreate;
-            // управляюший узел сообщает id нового узла и порт, к которому его надо подключить
             if (idToCreate == id) {
-                // если id равен данному, значит узел уже существует, посылаем ответ с ошибкой
                 std::string msgString = "Error: Already exists";
                 sendMessage(parentSocket, msgString);
             }
